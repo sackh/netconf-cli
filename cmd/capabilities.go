@@ -1,15 +1,15 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
+Implementation of reply subcommand.
+Command to get capabilities of the device.
 */
 package cmd
 
 import (
 	"fmt"
+	"github.com/gookit/color"
 	"github.com/openshift-telco/go-netconf-client/netconf"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
-	"log"
 )
 
 // capabilitiesCmd represents the capabilities command
@@ -25,23 +25,14 @@ var capabilitiesCmd = &cobra.Command{
 		}
 		s, err := netconf.DialSSH(fmt.Sprintf("%s:%d", ConfigObj.String("host"), 830), sshConfig)
 		if err != nil {
-			log.Fatal(err)
+			color.Redln(err)
 		}
 		for _, cap := range s.Capabilities {
-			fmt.Println(cap)
+			color.Greenln(cap)
 		}
 	},
 }
 
 func init() {
 	getCmd.AddCommand(capabilitiesCmd)
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// capabilitiesCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// capabilitiesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

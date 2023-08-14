@@ -1,18 +1,21 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
+This file implements root command of the netconf-cli.
 */
 package cmd
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
+	"log"
 
 	"github.com/knadh/koanf/parsers/dotenv"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
-	"log"
+	"github.com/openshift-telco/go-netconf-client/netconf"
+	"github.com/openshift-telco/go-netconf-client/netconf/message"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 )
 
 var cfgFile string
@@ -41,18 +44,9 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.netconf-cli.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "netconf-cli.env", "config file path")
 	rootCmd.MarkPersistentFlagRequired("config")
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func initConfig() {
@@ -60,4 +54,23 @@ func initConfig() {
 	if err := ConfigObj.Load(f, dotenv.Parser()); err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
+}
+
+func CreateSession(port int) *netconf.Session {
+	sshConfig := &ssh.ClientConfig{
+		User:            ConfigObj.String("username"),
+		Auth:            []ssh.AuthMethod{ssh.Password(ConfigObj.String("password"))},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	s, err := netconf.DialSSH(fmt.Sprintf("%s:%d", ConfigObj.String("host"), port), sshConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	capabilities := netconf.DefaultCapabilities
+	err = s.SendHello(&message.Hello{Capabilities: capabilities})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return s
 }
