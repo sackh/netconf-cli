@@ -5,6 +5,10 @@ A simple CLI tool to interact with devices using  NETCONF protocol.
 ## Installation
 
 ```bash
+go install github.com/sackh/netconf-cli@latest
+```
+
+```bash
 go get -u github.com/sackh/netconf-cli
 ```
 
